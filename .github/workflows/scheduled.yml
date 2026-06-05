@@ -38,6 +38,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run script
+        run: python main.py
         env:
           # Your secrets are available as environment variables
           # Add more secrets in Settings > Secrets > Actions
@@ -46,4 +47,4 @@ jobs:
           TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
           MY_EMAIL: ${{ secrets.MY_EMAIL }}
           MY_PASSWORD: ${{ secrets.MY_PASSWORD }}
-        run: python main.py
+      
