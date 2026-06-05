@@ -1,38 +1,63 @@
-# To run and test the code you need to update 4 places:
-# 1. Change MY_EMAIL/MY_PASSWORD to your own details.
-# 2. Go to your email provider and make it allow less secure apps.
-# 3. Update the SMTP ADDRESS to match your email provider.
-# 4. Update birthdays.csv to contain today's month and day.
-# See the solution video in the 100 Days of Python Course for explainations.
-
-
-from datetime import datetime
-import pandas
-import random
-import smtplib
 import os
+import requests
+# Download the helper library from https://www.twilio.com/docs/python/install
+import os
+from twilio.rest import Client
 
-# import os and use it to get the Github repository secrets
-MY_EMAIL = os.environ.get("MY_EMAIL")
-MY_PASSWORD = os.environ.get("MY_PASSWORD")
+# Find your Account SID and Auth Token at twilio.com/console
+# and set the environment variables. See http://twil.io/secure
+# 1. Donne directement la clé entre guillemets (sans os.environ)
+account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+# On utilise la route 2.5/forecast qui fonctionne parfaitement avec ta clé
+URL_API = "https://api.openweathermap.org/data/2.5/forecast"
 
-today = datetime.now()
-today_tuple = (today.month, today.day)
+parametres_meteo = {
+    "lat": 55.25,
+    "lon": 134.26,
+    "appid": os.environ.get("OWM_API_KEY"),
+    "units": "metric",  # Pour avoir les degrés Celsius
+    "cnt": 4
+}
 
-data = pandas.read_csv("birthdays.csv")
-birthdays_dict = {(data_row["month"], data_row["day"])                  : data_row for (index, data_row) in data.iterrows()}
-if today_tuple in birthdays_dict:
-    birthday_person = birthdays_dict[today_tuple]
-    file_path = f"letter_templates/letter_{random.randint(1, 3)}.txt"
-    with open(file_path) as letter_file:
-        contents = letter_file.read()
-        contents = contents.replace("[NAME]", birthday_person["name"])
+reponse = requests.get(url=URL_API, params=parametres_meteo)
+reponse.raise_for_status()
 
-    with smtplib.SMTP("YOUR EMAIL PROVIDER SMTP SERVER ADDRESS") as connection:
-        connection.starttls()
-        connection.login(MY_EMAIL, MY_PASSWORD)
-        connection.sendmail(
-            from_addr=MY_EMAIL,
-            to_addrs=birthday_person["email"],
-            msg=f"Subject:Happy Birthday!\n\n{contents}"
-        )
+will_rain = False
+list_codes = []
+data = reponse.json()
+print(data)
+for forecast in range(0,4):
+    if data["list"][forecast]["weather"][0]["id"] < 700:
+        will_rain = True
+# if will_rain:
+if True:
+    print("Bring an umbrella!")
+    # 2. Transmets-les à Twilio
+    client = Client(account_sid, auth_token)
+
+    message = client.messages.create(
+        body="It's going to rain!",
+        from_="+19349423039",
+        to="+15813096020",
+    )
+
+# Dans l'API 2.5/forecast, la liste des prévisions (toutes les 3 heures)
+# se trouve dans la clé "list".
+# liste_previsions = data["list"]
+#
+# # Angela veut vérifier les 12 prochaines heures.
+# # Comme chaque élément vaut 3 heures, on prend les 4 premiers éléments (4 x 3h = 12h)
+# tranche_12h = liste_previsions[:4]
+#
+# print("--- ANALYSE DES PROCHAINES 12 HEURES ---")
+# for prevision in tranche_12h:
+#     # On extrait le code météo (ex: 500 pour petite pluie, 800 pour ciel dégagé)
+#     id_meteo = prevision["weather"][0]["id"]
+#     heure_texte = prevision["dt_txt"]
+#
+#     print(f"Heure : {heure_texte} | Code Météo : {id_meteo}")
+#
+#     # La logique d'Angela : Si le code est inférieur à 700, c'est de la pluie/neige/tempête
+#     if id_meteo < 700:
+#         print("⚠️ Alerte ! Apporte un parapluie, il va pleuvoir !")
