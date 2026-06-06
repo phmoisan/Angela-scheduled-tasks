@@ -24,7 +24,6 @@ reponse = requests.get(url=URL_API, params=parametres_meteo)
 reponse.raise_for_status()
 
 will_rain = False
-list_codes = []
 data = reponse.json()
 print(data)
 for forecast in range(0,4):
