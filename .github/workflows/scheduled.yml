@@ -19,6 +19,10 @@ on:
   # This adds a "Run workflow" button so you can test manually
   workflow_dispatch:
 
+# 1ère fois : Configuration GLOBALE (pour nettoyer le warning de GitHub)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  
 jobs:
   run:
     runs-on: ubuntu-latest
